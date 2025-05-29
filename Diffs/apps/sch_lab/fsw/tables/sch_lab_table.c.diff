@@ -1,0 +1,13 @@
+63a64,69
+> /* The use of ".." in the #include below and the addition of the
+>  * VS[ABC]_SEND_HK_MID entries further on without app-specific #ifdefs
+>  * are horrible kludges.
+>  */
+> #include "../../../vs/fsw/inc/vs_ground.h"
+> 
+107a114,118
+>                                                 {CFE_SB_MSGID_WRAP_VALUE(VSA_SEND_HK_MID), 400, 0},
+> 
+> 						{CFE_SB_MSGID_WRAP_VALUE(VSB_SEND_HK_MID), 400, 0},
+> 
+> 						{CFE_SB_MSGID_WRAP_VALUE(VSC_SEND_HK_MID), 400, 0},

@@ -1,0 +1,2 @@
+89a90
+> list(APPEND MISSION_GLOBAL_APPLIST vsa vsb vsc grunt)

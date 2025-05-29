@@ -1,0 +1,182 @@
+#!/bin/sh
+
+# Copyright (c) 2024 Timothy Jon Fraser Consulting LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+
+# This script
+#
+# (1) Confirms the user has properly downloaded all of the cFS
+#     distribution tarballs the use case needs,
+# (2) Untars them all to construct a complete cFS source tree,
+# (3) Copies the new V-SPELLS files into that source tree, and
+# (4) Modifies a few of the original cFS files to integrate
+#     the new V-SPELLS files into the build infrastructure and
+#     runtime configuration.
+#
+
+# This is the directory that holds all the cFS distro tarballs
+CFSDIR="CFS"
+
+# This is the directory that holds the entirely new V-SPELLS files
+CODEDIR="Code"
+
+# This is the directory that holds the diff files for the cFS files
+# we need to modify to integrate the new V-SPELLS apps, libs, and tools.
+DIFFDIR="Diffs"
+
+# This is the directory where we will leave the combined cFS
+# and V-SPELLS source.
+COMBODIR="cFS-draco-rc5-vs"
+
+# These are all the cFS distro tarballs we need
+CFSTGZ="cFS-draco-rc5.tar.gz"
+CFETGZ="cFE-draco-rc5.tar.gz"
+OSALTGZ="osal-draco-rc5.tar.gz"
+PSPTGZ="PSP-draco-rc5.tar.gz"
+CITGZ="ci_lab-draco-rc5.tar.gz"
+SCHTGZ="sch_lab-draco-rc5.tar.gz"
+TOTGZ="to_lab-draco-rc5.tar.gz"
+SAPPTGZ="sample_app-draco-rc5.tar.gz"
+SLIBTGZ="sample_lib-draco-rc5.tar.gz"
+GSTGZ="cFS-GroundSystem-draco-rc5.tar.gz"
+ELFTGZ="elf2cfetbl-draco-rc5.tar.gz"
+CRCTGZ="tblCRCTool-draco-rc5.tar.gz"
+CFSTARBALLS="$CFSTGZ $CFETGZ $OSALTGZ $PSPTGZ $CITGZ $SCHTGZ $TOTGZ \
+$SAPPTGZ $SLIBTGZ $GSTGZ $ELFTGZ $CRCTGZ"
+
+# The NASA cFS distro tarballs have some git-related files in them
+# that we'd like to ingore when un-tarring.
+EXCLUDE="--exclude '*.git*' --exclude '*.clang-format' --exclude '*.lgtm.yml'"
+
+
+#
+# Confirm the user has downloaded all of the tarballs we need.
+#
+echo "(1) Confirming we have all the cFS distribution tarballs."
+
+for TARBALL in $CFSTARBALLS
+do
+    if [ ! -f "$CFSDIR/$TARBALL" ]
+    then
+	echo "Please download $TARBALL from the NASA repo on GitHub and"
+	echo -n "place it in the $CFSDIR directory.  "
+	echo "You will need all of these tarballs:"
+	echo ""
+	echo $CFSTARBALLS
+	exit 1
+    fi
+done
+
+
+#
+# Confirm that the target dir does not yet exist and then create it.
+#
+echo "(2) Creating $COMBODIR directory."
+
+if [ -e "$COMBODIR" ]
+then
+    echo "$COMBODIR already exists; quitting rather than overwrite it."
+    exit 1
+fi
+mkdir $COMBODIR || exit 1
+
+
+#
+# Untar each cFS tarball into $COMBODIR.
+#
+echo "(3) Un-tarring cFS distro tarballs into $COMBODIR."
+
+tar -C "$COMBODIR"      $EXCLUDE --strip-components=1 -xzf "$CFSDIR/$CFSTGZ"
+tar -C "$COMBODIR/cfe"  $EXCLUDE --strip-components=1 -xzf "$CFSDIR/$CFETGZ"
+tar -C "$COMBODIR/osal" $EXCLUDE --strip-components=1 -xzf "$CFSDIR/$OSALTGZ"
+tar -C "$COMBODIR/psp"  $EXCLUDE --strip-components=1 -xzf "$CFSDIR/$PSPTGZ"
+
+tar -C "$COMBODIR/apps/ci_lab"      $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$CITGZ"
+tar -C "$COMBODIR/apps/sch_lab"     $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$SCHTGZ"
+tar -C "$COMBODIR/apps/to_lab"      $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$TOTGZ"
+tar -C "$COMBODIR/apps/sample_app"  $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$SAPPTGZ"
+
+tar -C "$COMBODIR/libs/sample_lib"  $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$SLIBTGZ"
+
+tar -C "$COMBODIR/tools/cFS-GroundSystem" $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$GSTGZ"
+tar -C "$COMBODIR/tools/elf2cfetbl"       $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$ELFTGZ"
+tar -C "$COMBODIR/tools/tblCRCTool"       $EXCLUDE --strip-components=1 \
+    -xzf "$CFSDIR/$CRCTGZ"
+
+#
+# Perform relevant "Setup" step from https://github.com/nasa/cFS/README.md .
+#
+echo "(4) Copy the default Makefile and definitions \
+per cFS README \"Setup\" step."
+
+cp    "$COMBODIR/cfe/cmake/Makefile.sample" "$COMBODIR/Makefile"
+cp -r "$COMBODIR/cfe/cmake/sample_defs"     "$COMBODIR/sample_defs"
+
+
+#
+# Copy all of the entirely new V-SPELLS files into $COMBODIR.
+#
+echo "(5) Copy the new V-SPELLS apps, libs, and tools into $COMBODIR."
+cp -r "$CODEDIR/apps/vs"       "$COMBODIR/apps"
+cp -r "$CODEDIR/apps/vsa"      "$COMBODIR/apps"
+cp -r "$CODEDIR/apps/vsb"      "$COMBODIR/apps"
+cp -r "$CODEDIR/apps/vsc"      "$COMBODIR/apps"
+cp -r "$CODEDIR/libs/grunt"    "$COMBODIR/libs"
+cp -r "$CODEDIR/tools/TBLtest" "$COMBODIR/tools"
+
+
+#
+# Patch cFS files as needed to integrate the new V-SPELLS apps, libs, tools.
+#
+echo "(6) Patch cFS files to integrate the new  V-SPELLS apps, libs, \
+and tools."
+
+patch $COMBODIR/sample_defs/targets.cmake \
+      $DIFFDIR/sample_defs/targets.cmake.diff
+
+patch $COMBODIR/sample_defs/cpu1_cfe_es_startup.scr \
+      $DIFFDIR/sample_defs/cpu1_cfe_es_startup.scr.diff
+
+patch $COMBODIR/tools/CMakeLists.txt \
+      $DIFFDIR/tools/CMakeLists.txt.diff
+
+patch $COMBODIR/apps/sch_lab/fsw/tables/sch_lab_table.c \
+      $DIFFDIR/apps/sch_lab/fsw/tables/sch_lab_table.c.diff
+
+patch $COMBODIR/apps/to_lab/fsw/tables/to_lab_sub.c \
+      $DIFFDIR/apps/to_lab/fsw/tables/to_lab_sub.c.diff
+
+#
+# Perform "make prep" from cFS README "Build and Run" step.
+#
+echo "(7) \"make prep\" to configure build for simulation on Linux host."
+
+cd $COMBODIR
+make SIMULATION\=native prep
+
+
+#
+# All done!
+#
+
+echo "Setup complete, $COMBODIR ready for \"make\", \"make install\"."
+
+exit 0

@@ -1,0 +1,6 @@
+2a3
+> CFE_LIB, grunt,       GRUNT_Init,         GRUNT,         0,   0,     0x0, 0;
+3a5,7
+> CFE_APP, vsa,         VSA_Main,           VSA_APP,      55,   16384, 0x0, 0;
+> CFE_APP, vsb,         VSB_Main,           VSB_APP,      56,   16384, 0x0, 0;
+> CFE_APP, vsc,         VSC_Main,           VSC_APP,      57,   16384, 0x0, 0;

@@ -1,0 +1,8 @@
+60a61,63
+> /* The use of ".." in the #include below is a horrible kludge. */
+> #include "../../../vs/fsw/inc/vs_ground.h"
+> 
+63a67,69
+>                                       {CFE_SB_MSGID_WRAP_VALUE(VSA_TLM_HK_MID), {0, 0}, 4},
+>                                       {CFE_SB_MSGID_WRAP_VALUE(VSB_TLM_HK_MID), {0, 0}, 4},
+>                                       {CFE_SB_MSGID_WRAP_VALUE(VSC_TLM_HK_MID), {0, 0}, 4},
